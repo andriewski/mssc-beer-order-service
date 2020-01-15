@@ -4,9 +4,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>guru.springframework.student</groupId>
-        <artifactId>mssc-brewery-bom</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <!--todo Change to my own bom file -->
+        <groupId>com.github.sfg-beer-works</groupId>
+        <artifactId>sfg-brewery-bom</artifactId>
+        <version>1.0.7</version>
     </parent>
 
     <groupId>guru.springframework</groupId>
