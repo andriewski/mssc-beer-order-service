@@ -5,7 +5,6 @@ import guru.sfg.beer.order.service.domain.BeerOrderEvent;
 import guru.sfg.beer.order.service.domain.BeerOrderStatus;
 import guru.sfg.beer.order.service.repositories.BeerOrderRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.config.StateMachineFactory;
@@ -19,6 +18,9 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
 
     private final StateMachineFactory<BeerOrderStatus, BeerOrderEvent> stateMachineFactory;
     private final BeerOrderRepository beerOrderRepository;
+    private final BeerOrderStateInterceptor beerOrderStateInterceptor;
+
+    public static final String BEER_ORDER_ID_HEADER = "beer_order_id";
 
     @Transactional
     @Override
@@ -35,19 +37,21 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
     private void sendBeerOrderEvent(BeerOrder beerOrder, BeerOrderEvent event) {
         StateMachine<BeerOrderStatus, BeerOrderEvent> sm = build(beerOrder);
 
-        Message msg = MessageBuilder.withPayload(event)
-                .build();
-
-        sm.sendEvent(msg);
+        sm.sendEvent(
+                MessageBuilder.withPayload(event)
+                        .setHeader(BEER_ORDER_ID_HEADER, beerOrder.getId())
+                        .build()
+        );
     }
 
-    private StateMachine<BeerOrderStatus, BeerOrderEvent> build (BeerOrder beerOrder) {
+    private StateMachine<BeerOrderStatus, BeerOrderEvent> build(BeerOrder beerOrder) {
         StateMachine<BeerOrderStatus, BeerOrderEvent> sm = stateMachineFactory.getStateMachine(beerOrder.getId());
 
         sm.stop();
 
         sm.getStateMachineAccessor()
                 .doWithAllRegions(sma -> {
+                    sma.addStateMachineInterceptor(beerOrderStateInterceptor);
                     sma.resetStateMachine(new DefaultStateMachineContext<>(beerOrder.getOrderStatus(), null, null, null));
                 });
 
