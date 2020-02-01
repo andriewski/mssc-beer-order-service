@@ -28,7 +28,7 @@ public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<B
     @Override
     public void configure(StateMachineTransitionConfigurer<BeerOrderStatus, BeerOrderEvent> transitions) throws Exception {
         transitions.withExternal()
-                .source(BeerOrderStatus.NEW).target(BeerOrderStatus.NEW)
+                .source(BeerOrderStatus.NEW).target(BeerOrderStatus.VALIDATION_PENDING)
                 .event(BeerOrderEvent.VALIDATE_ORDER)
             .and().withExternal()
                 .source(BeerOrderStatus.NEW).target(BeerOrderStatus.VALIDATED)
