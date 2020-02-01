@@ -2,6 +2,8 @@ package guru.sfg.beer.order.service.sm;
 
 import guru.sfg.beer.order.service.domain.BeerOrderEvent;
 import guru.sfg.beer.order.service.domain.BeerOrderStatus;
+import guru.sfg.beer.order.service.sm.actions.ValidateOrderAction;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.statemachine.config.EnableStateMachineFactory;
 import org.springframework.statemachine.config.StateMachineConfigurerAdapter;
@@ -12,7 +14,10 @@ import java.util.EnumSet;
 
 @Configuration
 @EnableStateMachineFactory
+@RequiredArgsConstructor
 public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<BeerOrderStatus, BeerOrderEvent> {
+
+    private final ValidateOrderAction validateOrderAction;
 
     @Override
     public void configure(StateMachineStateConfigurer<BeerOrderStatus, BeerOrderEvent> states) throws Exception {
@@ -30,6 +35,7 @@ public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<B
         transitions.withExternal()
                 .source(BeerOrderStatus.NEW).target(BeerOrderStatus.VALIDATION_PENDING)
                 .event(BeerOrderEvent.VALIDATE_ORDER)
+                .action(validateOrderAction)
             .and().withExternal()
                 .source(BeerOrderStatus.NEW).target(BeerOrderStatus.VALIDATED)
                 .event(BeerOrderEvent.VALIDATION_PASSED)
