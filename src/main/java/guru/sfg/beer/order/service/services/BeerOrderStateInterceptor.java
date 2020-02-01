@@ -29,10 +29,10 @@ public class BeerOrderStateInterceptor extends StateMachineInterceptorAdapter<Be
                                StateMachine<BeerOrderStatus, BeerOrderEvent> stateMachine) {
         if (message != null) {
             Optional.ofNullable((String) message.getHeaders().get(BeerOrderManagerImpl.BEER_ORDER_ID_HEADER))
-                    .ifPresent(idHeader -> {
-                        log.debug("Saving state for order id: " + idHeader + " Status: " + state.getId());
+                    .ifPresent(beerOrderId -> {
+                        log.debug("Saving state for order id: " + beerOrderId + " Status: " + state.getId());
 
-                        BeerOrder beerOrder = beerOrderRepository.getOne(UUID.fromString(idHeader));
+                        BeerOrder beerOrder = beerOrderRepository.getOne(UUID.fromString(beerOrderId));
 
                         beerOrder.setOrderStatus(state.getId());
 
