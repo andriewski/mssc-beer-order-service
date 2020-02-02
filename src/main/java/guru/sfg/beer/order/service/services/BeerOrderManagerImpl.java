@@ -37,10 +37,18 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
     }
 
     @Override
-    public void applyValidationResult(UUID beerOrderId, boolean isValid) {
+    public void processValidationResult(UUID beerOrderId, boolean isValid) {
         BeerOrder beerOrder = beerOrderRepository.getOne(beerOrderId);
 
-        sendBeerOrderEvent(beerOrder, isValid ? BeerOrderEvent.VALIDATION_PASSED : BeerOrderEvent.VALIDATION_FAILED);
+        if (isValid) {
+            sendBeerOrderEvent(beerOrder, BeerOrderEvent.VALIDATION_PASSED);
+
+            BeerOrder validatedBeerOrder = beerOrderRepository.findOneById(beerOrderId);
+
+            sendBeerOrderEvent(validatedBeerOrder, BeerOrderEvent.ALLOCATE_ORDER);
+        } else {
+            sendBeerOrderEvent(beerOrder, BeerOrderEvent.VALIDATION_FAILED);
+        }
     }
 
     private void sendBeerOrderEvent(BeerOrder beerOrder, BeerOrderEvent event) {

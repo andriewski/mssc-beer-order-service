@@ -21,6 +21,6 @@ public class BeerOrderValidationResultListener {
     public void getValidationResult(@Payload ValidateBeerOrderResult validateBeerOrderResult) {
         log.debug("Validation Result for Order Id: " + validateBeerOrderResult.getBeerOrderId());
 
-        beerOrderManager.applyValidationResult(validateBeerOrderResult.getBeerOrderId(), validateBeerOrderResult.isValid());
+        beerOrderManager.processValidationResult(validateBeerOrderResult.getBeerOrderId(), validateBeerOrderResult.isValid());
     }
 }
