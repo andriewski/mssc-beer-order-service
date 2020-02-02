@@ -22,6 +22,12 @@ public class AllocationOrderResultListener {
         boolean hasPendingInventory = allocationOrderResult.isPendingInventory();
         BeerOrderDto beerOrderDto = allocationOrderResult.getBeerOrderDto();
 
-        beerOrderManager.processAllocationResult(beerOrderDto.getId(), hasAllocationError, hasPendingInventory);
+        if (hasAllocationError) {
+            beerOrderManager.beerOrderAllocationFailed(beerOrderDto);
+        } else if (hasPendingInventory) {
+            beerOrderManager.beerOrderAllocationPendingInventory(beerOrderDto);
+        } else {
+            beerOrderManager.beerOrderAllocationPassed(beerOrderDto);
+        }
     }
 }
