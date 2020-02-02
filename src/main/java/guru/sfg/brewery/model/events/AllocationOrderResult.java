@@ -8,7 +8,9 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class AllocateOrderRequest {
+public class AllocationOrderResult {
 
     private BeerOrderDto beerOrderDto;
+    private boolean allocationError;
+    private boolean pendingInventory;
 }

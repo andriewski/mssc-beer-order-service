@@ -9,4 +9,6 @@ public interface BeerOrderManager {
     BeerOrder newBeerOrder(BeerOrder beerOrder);
 
     void processValidationResult(UUID beerOrderId, boolean isValid);
+
+    void processAllocationResult(UUID beerOrderId, boolean hasAllocationError, boolean hasPendingInventory);
 }
