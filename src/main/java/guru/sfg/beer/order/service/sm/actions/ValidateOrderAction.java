@@ -29,10 +29,10 @@ public class ValidateOrderAction implements Action<BeerOrderStatus, BeerOrderEve
 
     @Override
     public void execute(StateContext<BeerOrderStatus, BeerOrderEvent> stateContext) {
-        String idHeader = (String) stateContext.getMessage().getHeaders().get(BeerOrderManagerImpl.BEER_ORDER_ID_HEADER);
+        Object idHeader = stateContext.getMessage().getHeaders().get(BeerOrderManagerImpl.BEER_ORDER_ID_HEADER);
 
         if (idHeader != null) {
-            BeerOrder beerOrder = beerOrderRepository.getOne(UUID.fromString(idHeader));
+            BeerOrder beerOrder = beerOrderRepository.getOne(UUID.fromString(idHeader.toString()));
             BeerOrderDto beerOrderDto = beerOrderMapper.beerOrderToDto(beerOrder);
 
             log.debug("Sending beerOrder id {} to validate to {}", beerOrder.getId(), BeerOrderManagerImpl.BEER_ORDER_ID_HEADER);

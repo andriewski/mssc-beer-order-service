@@ -104,7 +104,14 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
         sm.getStateMachineAccessor()
                 .doWithAllRegions(sma -> {
                     sma.addStateMachineInterceptor(beerOrderStateInterceptor);
-                    sma.resetStateMachine(new DefaultStateMachineContext<>(beerOrder.getOrderStatus(), null, null, null));
+                    sma.resetStateMachine(
+                            new DefaultStateMachineContext<>(
+                                    beerOrder.getOrderStatus(),
+                                    null,
+                                    null,
+                                    null
+                            )
+                    );
                 });
 
         sm.start();
