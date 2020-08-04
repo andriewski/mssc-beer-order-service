@@ -28,7 +28,9 @@ import static com.github.jenspiegsa.wiremockextension.ManagedWireMockServer.with
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
-import static guru.sfg.beer.order.service.services.testcomponents.BeerOrderValidationListener.FAILED_KEY;
+import static guru.sfg.beer.order.service.services.testcomponents.BeerOrderAllocationListener.ALLOCATION_FAILED_KEY;
+import static guru.sfg.beer.order.service.services.testcomponents.BeerOrderAllocationListener.PARTIAL_ALLOCATION_FAILED_KEY;
+import static guru.sfg.beer.order.service.services.testcomponents.BeerOrderValidationListener.VALIDATION_FAILED_KEY;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -154,13 +156,55 @@ public class BeerOrderManagerIt {
                 .willReturn(okJson(objectMapper.writeValueAsString(beerDto)))
         );
         BeerOrder beerOrder = createBeerOrder();
-        beerOrder.setCustomerRef(FAILED_KEY);
+        beerOrder.setCustomerRef(VALIDATION_FAILED_KEY);
 
         BeerOrder savedBeerOrder = beerOrderManager.newBeerOrder(beerOrder);
 
         await().untilAsserted(() -> {
             BeerOrder foundOrder = beerOrderRepository.findById(savedBeerOrder.getId()).get();
             assertEquals(BeerOrderStatus.VALIDATION_EXCEPTION, foundOrder.getOrderStatus());
+        });
+    }
+
+    @Test
+    void testFailedAllocation() throws JsonProcessingException {
+        BeerDto beerDto = BeerDto.builder()
+                .id(beerId)
+                .upc(upc)
+                .build();
+
+        server.stubFor(get(BeerServiceRestTemplateImpl.BEER_UPC_PATH_V1 + upc)
+                .willReturn(okJson(objectMapper.writeValueAsString(beerDto)))
+        );
+        BeerOrder beerOrder = createBeerOrder();
+        beerOrder.setCustomerRef(ALLOCATION_FAILED_KEY);
+
+        BeerOrder savedBeerOrder = beerOrderManager.newBeerOrder(beerOrder);
+
+        await().untilAsserted(() -> {
+            BeerOrder foundOrder = beerOrderRepository.findById(savedBeerOrder.getId()).get();
+            assertEquals(BeerOrderStatus.ALLOCATION_EXCEPTION, foundOrder.getOrderStatus());
+        });
+    }
+
+    @Test
+    void testFailedPartialAllocation() throws JsonProcessingException {
+        BeerDto beerDto = BeerDto.builder()
+                .id(beerId)
+                .upc(upc)
+                .build();
+
+        server.stubFor(get(BeerServiceRestTemplateImpl.BEER_UPC_PATH_V1 + upc)
+                .willReturn(okJson(objectMapper.writeValueAsString(beerDto)))
+        );
+        BeerOrder beerOrder = createBeerOrder();
+        beerOrder.setCustomerRef(PARTIAL_ALLOCATION_FAILED_KEY);
+
+        BeerOrder savedBeerOrder = beerOrderManager.newBeerOrder(beerOrder);
+
+        await().untilAsserted(() -> {
+            BeerOrder foundOrder = beerOrderRepository.findById(savedBeerOrder.getId()).get();
+            assertEquals(BeerOrderStatus.ALLOCATION_PENDING, foundOrder.getOrderStatus());
         });
     }
 
@@ -175,7 +219,6 @@ public class BeerOrderManagerIt {
                         .upc(upc)
                         .beerId(beerId)
                         .orderQuantity(1)
-                        .quantityAllocated(1)
                         .beerOrder(beerOrder)
                         .build()
 

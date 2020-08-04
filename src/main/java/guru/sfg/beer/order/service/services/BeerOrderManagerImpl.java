@@ -67,7 +67,7 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
     @Override
     public void beerOrderAllocationPendingInventory(BeerOrderDto beerOrderDto) {
         beerOrderRepository.findById(beerOrderDto.getId()).ifPresentOrElse(beerOrder -> {
-            sendBeerOrderEvent(beerOrder, BeerOrderEvent.ALLOCATION_FAILED);
+            sendBeerOrderEvent(beerOrder, BeerOrderEvent.ALLOCATION_NO_INVENTORY);
             updateAllocatedQuantity(beerOrderDto);
         }, () -> log.error("beerOrderAllocationPendingInventory: Object not found by id: {}", beerOrderDto.getId()));
     }
@@ -75,7 +75,7 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
     @Override
     public void beerOrderAllocationFailed(BeerOrderDto beerOrderDto) {
         beerOrderRepository.findById(beerOrderDto.getId()).ifPresentOrElse(beerOrder -> {
-            sendBeerOrderEvent(beerOrder, BeerOrderEvent.ALLOCATION_NO_INVENTORY);
+            sendBeerOrderEvent(beerOrder, BeerOrderEvent.ALLOCATION_FAILED);
         }, () -> log.error("beerOrderAllocationFailed: Object not found by id: {}", beerOrderDto.getId()));
     }
 

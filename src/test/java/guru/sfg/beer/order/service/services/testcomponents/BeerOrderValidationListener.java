@@ -16,13 +16,13 @@ import org.springframework.stereotype.Component;
 public class BeerOrderValidationListener {
 
     private final JmsTemplate jmsTemplate;
-    public final static String FAILED_KEY = "fail-validation";
+    public final static String VALIDATION_FAILED_KEY = "fail-validation";
 
 
     @JmsListener(destination = JmsConfig.VALIDATE_ORDER_QUEUE)
     public void handleMessage(Message<ValidateBeerOrderRequest> msg) {
         ValidateBeerOrderRequest request = msg.getPayload();
-        boolean valid = !FAILED_KEY.equals(request.getBeerOrderDto().getCustomerRef());
+        boolean valid = !VALIDATION_FAILED_KEY.equals(request.getBeerOrderDto().getCustomerRef());
 
         jmsTemplate.convertAndSend(
                 JmsConfig.VALIDATE_ORDER_RESULT_QUEUE,
