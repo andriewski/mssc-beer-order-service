@@ -12,7 +12,6 @@ import guru.sfg.beer.order.service.repositories.BeerOrderRepository;
 import guru.sfg.beer.order.service.repositories.CustomerRepository;
 import guru.sfg.beer.order.service.services.clients.beer.BeerServiceRestTemplateImpl;
 import guru.sfg.beer.order.service.services.clients.beer.model.BeerDto;
-import org.hibernate.ObjectNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,10 +28,12 @@ import static com.github.jenspiegsa.wiremockextension.ManagedWireMockServer.with
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static guru.sfg.beer.order.service.services.testcomponents.BeerOrderValidationListener.FAILED_KEY;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+@SuppressWarnings("OptionalGetWithoutIsPresent")
 @ExtendWith(WireMockExtension.class)
 @SpringBootTest
 public class BeerOrderManagerIt {
@@ -78,7 +79,6 @@ public class BeerOrderManagerIt {
         );
     }
 
-    @SuppressWarnings("OptionalGetWithoutIsPresent")
     @Test
     void testNewToAllocated() throws JsonProcessingException {
         BeerDto beerDto = BeerDto.builder()
@@ -112,7 +112,6 @@ public class BeerOrderManagerIt {
         });
     }
 
-    @SuppressWarnings("OptionalGetWithoutIsPresent")
     @Test
     void testNewToPickedUp() throws JsonProcessingException {
         BeerDto beerDto = BeerDto.builder()
@@ -142,6 +141,27 @@ public class BeerOrderManagerIt {
         BeerOrder pickedUpBeerOrder = beerOrderRepository.findById(savedBeerOrder.getId()).get();
         assertNotNull(pickedUpBeerOrder);
         assertEquals(BeerOrderStatus.PICKED_UP, pickedUpBeerOrder.getOrderStatus());
+    }
+
+    @Test
+    void testFailedValidation() throws JsonProcessingException {
+        BeerDto beerDto = BeerDto.builder()
+                .id(beerId)
+                .upc(upc)
+                .build();
+
+        server.stubFor(get(BeerServiceRestTemplateImpl.BEER_UPC_PATH_V1 + upc)
+                .willReturn(okJson(objectMapper.writeValueAsString(beerDto)))
+        );
+        BeerOrder beerOrder = createBeerOrder();
+        beerOrder.setCustomerRef(FAILED_KEY);
+
+        BeerOrder savedBeerOrder = beerOrderManager.newBeerOrder(beerOrder);
+
+        await().untilAsserted(() -> {
+            BeerOrder foundOrder = beerOrderRepository.findById(savedBeerOrder.getId()).get();
+            assertEquals(BeerOrderStatus.VALIDATION_EXCEPTION, foundOrder.getOrderStatus());
+        });
     }
 
     public BeerOrder createBeerOrder() {
