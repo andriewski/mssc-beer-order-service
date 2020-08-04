@@ -112,6 +112,38 @@ public class BeerOrderManagerIt {
         });
     }
 
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
+    @Test
+    void testNewToPickedUp() throws JsonProcessingException {
+        BeerDto beerDto = BeerDto.builder()
+                .id(beerId)
+                .upc(upc)
+                .build();
+
+        server.stubFor(get(BeerServiceRestTemplateImpl.BEER_UPC_PATH_V1 + upc)
+                .willReturn(okJson(objectMapper.writeValueAsString(beerDto)))
+        );
+        BeerOrder beerOrder = createBeerOrder();
+
+        BeerOrder savedBeerOrder = beerOrderManager.newBeerOrder(beerOrder);
+
+        await().untilAsserted(() -> {
+            BeerOrder foundOrder = beerOrderRepository.findById(savedBeerOrder.getId()).get();
+            assertEquals(BeerOrderStatus.ALLOCATED, foundOrder.getOrderStatus());
+        });
+
+        beerOrderManager.pickupOrder(beerOrder.getId());
+
+        await().untilAsserted(() -> {
+            BeerOrder foundOrder = beerOrderRepository.findById(savedBeerOrder.getId()).get();
+            assertEquals(BeerOrderStatus.PICKED_UP, foundOrder.getOrderStatus());
+        });
+
+        BeerOrder pickedUpBeerOrder = beerOrderRepository.findById(savedBeerOrder.getId()).get();
+        assertNotNull(pickedUpBeerOrder);
+        assertEquals(BeerOrderStatus.PICKED_UP, pickedUpBeerOrder.getOrderStatus());
+    }
+
     public BeerOrder createBeerOrder() {
         BeerOrder beerOrder = BeerOrder.builder()
                 .customer(testCustomer)
