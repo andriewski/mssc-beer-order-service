@@ -1,0 +1,5 @@
+sfg.brewery.beer-service-host: http://localhost:8083
+spring:
+    artemis:
+        user: artemis
+        password: simetraehcapa

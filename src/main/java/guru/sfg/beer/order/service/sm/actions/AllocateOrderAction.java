@@ -11,6 +11,7 @@ import guru.sfg.brewery.model.BeerOrderDto;
 import guru.sfg.brewery.model.events.AllocationOrderRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.ObjectNotFoundException;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.statemachine.StateContext;
 import org.springframework.statemachine.action.Action;
@@ -29,10 +30,11 @@ public class AllocateOrderAction implements Action<BeerOrderStatus, BeerOrderEve
 
     @Override
     public void execute(StateContext<BeerOrderStatus, BeerOrderEvent> stateContext) {
-        String idHeader = (String) stateContext.getMessage().getHeaders().get(BeerOrderManagerImpl.BEER_ORDER_ID_HEADER);
+        Object idHeader = stateContext.getMessage().getHeaders().get(BeerOrderManagerImpl.BEER_ORDER_ID_HEADER);
 
         if (idHeader != null) {
-            BeerOrder beerOrder = beerOrderRepository.findOneById(UUID.fromString(idHeader));
+            BeerOrder beerOrder = beerOrderRepository.findById(UUID.fromString(idHeader.toString()))
+                    .orElseThrow(() -> new ObjectNotFoundException(idHeader.toString(), "BeerOrder"));
             BeerOrderDto beerOrderDto = beerOrderMapper.beerOrderToDto(beerOrder);
 
             log.debug("Sending beerOrder id {} to allocate to {}", beerOrder.getId(), BeerOrderManagerImpl.BEER_ORDER_ID_HEADER);

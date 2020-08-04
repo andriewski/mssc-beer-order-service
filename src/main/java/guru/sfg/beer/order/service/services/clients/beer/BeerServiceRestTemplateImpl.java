@@ -14,9 +14,9 @@ import java.util.UUID;
 public class BeerServiceRestTemplateImpl implements BeerService {
 
     private final RestTemplate restTemplate;
-    private final String BEER_PATH_V1 = "/api/v1/beer/";
-    private final String BEER_UPC_PATH_V1 = "/api/v1/beerUpc/";
     private String beerServiceHost;
+    public static final String BEER_PATH_V1 = "/api/v1/beer/";
+    public static final String BEER_UPC_PATH_V1 = "/api/v1/beerUpc/";
 
     public BeerServiceRestTemplateImpl(RestTemplateBuilder restTemplateBuilder) {
         this.restTemplate = restTemplateBuilder.build();

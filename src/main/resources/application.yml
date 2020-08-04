@@ -2,6 +2,11 @@ sfg.brewery.beer-service-host: http://localhost:8080
 logging.level.guru: debug
 server.port: 8081
 spring:
+    jackson:
+        serialization:
+            write-dates-as-timestamps: false
+            write-date-timestamps-as-nanoseconds: false
     artemis:
         user: artemis
         password: simetraehcapa
+
