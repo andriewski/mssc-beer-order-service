@@ -97,8 +97,7 @@ public class BeerOrderManagerIt {
             BeerOrder foundOrder = beerOrderRepository.findById(savedBeerOrder.getId())
                     .orElseThrow(() -> new ObjectNotFoundException(savedBeerOrder.getId(), "beerOrder"));
 
-            //todo??? allocated status
-            return BeerOrderStatus.ALLOCATION_PENDING == foundOrder.getOrderStatus();
+            return BeerOrderStatus.ALLOCATED == foundOrder.getOrderStatus();
         });
 
         BeerOrder allocatedBeerOrder = beerOrderRepository.findById(savedBeerOrder.getId()).get();

@@ -6,6 +6,7 @@ import guru.sfg.beer.order.service.domain.BeerOrderStatus;
 import guru.sfg.beer.order.service.repositories.BeerOrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.ObjectNotFoundException;
 import org.springframework.messaging.Message;
 import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.state.State;
@@ -32,7 +33,8 @@ public class BeerOrderStateInterceptor extends StateMachineInterceptorAdapter<Be
                     .ifPresent(beerOrderId -> {
                         log.debug("Saving state for order id: " + beerOrderId + " Status: " + state.getId());
 
-                        BeerOrder beerOrder = beerOrderRepository.getOne(UUID.fromString(beerOrderId.toString()));
+                        BeerOrder beerOrder = beerOrderRepository.findById(UUID.fromString(beerOrderId.toString()))
+                                .orElseThrow(() -> new ObjectNotFoundException(beerOrderId.toString(), "BeerOrder"));
 
                         beerOrder.setOrderStatus(state.getId());
 
