@@ -93,16 +93,23 @@ public class BeerOrderManagerIt {
 
         BeerOrder savedBeerOrder = beerOrderManager.newBeerOrder(beerOrder);
 
-        await().until(() -> {
-            BeerOrder foundOrder = beerOrderRepository.findById(savedBeerOrder.getId())
-                    .orElseThrow(() -> new ObjectNotFoundException(savedBeerOrder.getId(), "beerOrder"));
+        await().untilAsserted(() -> {
+            BeerOrder foundOrder = beerOrderRepository.findById(savedBeerOrder.getId()).get();
+            assertEquals(BeerOrderStatus.ALLOCATED, foundOrder.getOrderStatus());
+        });
 
-            return BeerOrderStatus.ALLOCATED == foundOrder.getOrderStatus();
+        await().untilAsserted(() -> {
+            BeerOrder foundOrder = beerOrderRepository.findById(beerOrder.getId()).get();
+            BeerOrderLine line = foundOrder.getBeerOrderLines().iterator().next();
+            assertEquals(line.getOrderQuantity(), line.getQuantityAllocated());
         });
 
         BeerOrder allocatedBeerOrder = beerOrderRepository.findById(savedBeerOrder.getId()).get();
         assertNotNull(allocatedBeerOrder);
         assertEquals(BeerOrderStatus.ALLOCATED, allocatedBeerOrder.getOrderStatus());
+        allocatedBeerOrder.getBeerOrderLines().forEach(line -> {
+            assertEquals(line.getOrderQuantity(), line.getQuantityAllocated());
+        });
     }
 
     public BeerOrder createBeerOrder() {
@@ -116,6 +123,7 @@ public class BeerOrderManagerIt {
                         .upc(upc)
                         .beerId(beerId)
                         .orderQuantity(1)
+                        .quantityAllocated(1)
                         .beerOrder(beerOrder)
                         .build()
 

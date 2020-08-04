@@ -33,7 +33,7 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
     public BeerOrder newBeerOrder(BeerOrder beerOrder) {
         beerOrder.setId(null);
         beerOrder.setOrderStatus(BeerOrderStatus.NEW);
-        BeerOrder savedBeerOrder = beerOrderRepository.save(beerOrder);
+        BeerOrder savedBeerOrder = beerOrderRepository.saveAndFlush(beerOrder);
 
         sendBeerOrderEvent(savedBeerOrder, BeerOrderEvent.VALIDATE_ORDER);
 
@@ -47,40 +47,40 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
                 sendBeerOrderEvent(beerOrder, BeerOrderEvent.VALIDATION_PASSED);
 
                 BeerOrder validatedBeerOrder = beerOrderRepository.findById(beerOrderId)
-                        .orElseThrow(() -> new ObjectNotFoundException(beerOrderId, "beer"));
+                        .orElseThrow(() -> new ObjectNotFoundException(beerOrderId, "Beer"));
 
                 sendBeerOrderEvent(validatedBeerOrder, BeerOrderEvent.ALLOCATE_ORDER);
             } else {
                 sendBeerOrderEvent(beerOrder, BeerOrderEvent.VALIDATION_FAILED);
             }
-        }, () -> log.error("Object not found by id: {} ", beerOrderId));
+        }, () -> log.error("processValidationResult: Object not found by id: {} ", beerOrderId));
     }
 
     @Override
     public void beerOrderAllocationPassed(BeerOrderDto beerOrderDto) {
         beerOrderRepository.findById(beerOrderDto.getId()).ifPresentOrElse(beerOrder -> {
             sendBeerOrderEvent(beerOrder, BeerOrderEvent.ALLOCATION_SUCCESS);
-            updateAllocatedQuantity(beerOrderDto, beerOrder);
-        }, () -> log.error("Object not found by id: {} ", beerOrderDto.getId()));
+            updateAllocatedQuantity(beerOrderDto);
+        }, () -> log.error("beerOrderAllocationPassed: Object not found by id: {} ", beerOrderDto.getId()));
     }
 
     @Override
     public void beerOrderAllocationPendingInventory(BeerOrderDto beerOrderDto) {
         beerOrderRepository.findById(beerOrderDto.getId()).ifPresentOrElse(beerOrder -> {
             sendBeerOrderEvent(beerOrder, BeerOrderEvent.ALLOCATION_FAILED);
-            updateAllocatedQuantity(beerOrderDto, beerOrder);
-        }, () -> log.error("Object not found by id: {}", beerOrderDto.getId()));
+            updateAllocatedQuantity(beerOrderDto);
+        }, () -> log.error("beerOrderAllocationPendingInventory: Object not found by id: {}", beerOrderDto.getId()));
     }
 
     @Override
     public void beerOrderAllocationFailed(BeerOrderDto beerOrderDto) {
         beerOrderRepository.findById(beerOrderDto.getId()).ifPresentOrElse(beerOrder -> {
             sendBeerOrderEvent(beerOrder, BeerOrderEvent.ALLOCATION_NO_INVENTORY);
-        }, () -> log.error("Object not found by id: {}", beerOrderDto.getId()));
+        }, () -> log.error("beerOrderAllocationFailed: Object not found by id: {}", beerOrderDto.getId()));
     }
 
-    private void updateAllocatedQuantity(BeerOrderDto beerOrderDto, BeerOrder beerOrder) {
-        beerOrderRepository.findById(beerOrder.getId()).ifPresentOrElse(allocatedOrder -> {
+    private void updateAllocatedQuantity(BeerOrderDto beerOrderDto) {
+        beerOrderRepository.findById(beerOrderDto.getId()).ifPresentOrElse(allocatedOrder -> {
             allocatedOrder.getBeerOrderLines().forEach(beerOrderLine -> {
                 beerOrderDto.getBeerOrderLines().forEach(beerOrderLineDto -> {
                     if (beerOrderLine.getBeerId().equals(beerOrderLineDto.getBeerId())) {
@@ -90,7 +90,7 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
             });
 
             beerOrderRepository.saveAndFlush(allocatedOrder);
-        }, () -> log.error("Object not found by id: {}", beerOrderDto.getId()));
+        }, () -> log.error("updateAllocatedQuantity: Object not found by id: {}", beerOrderDto.getId()));
     }
 
     private void sendBeerOrderEvent(BeerOrder beerOrder, BeerOrderEvent event) {
