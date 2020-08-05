@@ -18,12 +18,14 @@ public class BeerOrderAllocationListener {
     private final JmsTemplate jmsTemplate;
     public final static String ALLOCATION_FAILED_KEY = "fail-allocation";
     public final static String PARTIAL_ALLOCATION_FAILED_KEY = "fail-partial-allocation";
+    public final static String ALLOCATION_NO_RESPONSE = "allocation-no-response";
 
     @JmsListener(destination = JmsConfig.ALLOCATE_ORDER_QUEUE)
     public void handleMessage(Message<AllocationOrderRequest> msg) {
         AllocationOrderRequest request = msg.getPayload();
         boolean allocationFailed = ALLOCATION_FAILED_KEY.equals(request.getBeerOrderDto().getCustomerRef());
         boolean partialAllocation = PARTIAL_ALLOCATION_FAILED_KEY.equals(request.getBeerOrderDto().getCustomerRef());
+        boolean withResponse = !ALLOCATION_NO_RESPONSE.equals(request.getBeerOrderDto().getCustomerRef());
 
         request.getBeerOrderDto().getBeerOrderLines().forEach(line -> {
             if (partialAllocation) {
@@ -33,13 +35,15 @@ public class BeerOrderAllocationListener {
             }
         });
 
-        jmsTemplate.convertAndSend(
-                JmsConfig.ALLOCATE_ORDER_RESULT_QUEUE,
-                AllocationOrderResult.builder()
-                        .beerOrderDto(request.getBeerOrderDto())
-                        .allocationError(allocationFailed)
-                        .pendingInventory(partialAllocation)
-                        .build()
-        );
+        if (withResponse) {
+            jmsTemplate.convertAndSend(
+                    JmsConfig.ALLOCATE_ORDER_RESULT_QUEUE,
+                    AllocationOrderResult.builder()
+                            .beerOrderDto(request.getBeerOrderDto())
+                            .allocationError(allocationFailed)
+                            .pendingInventory(partialAllocation)
+                            .build()
+            );
+        }
     }
 }

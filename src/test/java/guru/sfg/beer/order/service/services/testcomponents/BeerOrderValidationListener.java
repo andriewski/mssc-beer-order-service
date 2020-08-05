@@ -17,19 +17,22 @@ public class BeerOrderValidationListener {
 
     private final JmsTemplate jmsTemplate;
     public final static String VALIDATION_FAILED_KEY = "fail-validation";
-
+    public final static String VALIDATION_NO_RESPONSE = "validation-no-response";
 
     @JmsListener(destination = JmsConfig.VALIDATE_ORDER_QUEUE)
     public void handleMessage(Message<ValidateBeerOrderRequest> msg) {
         ValidateBeerOrderRequest request = msg.getPayload();
         boolean valid = !VALIDATION_FAILED_KEY.equals(request.getBeerOrderDto().getCustomerRef());
+        boolean withResponse = !VALIDATION_NO_RESPONSE.equals(request.getBeerOrderDto().getCustomerRef());
 
-        jmsTemplate.convertAndSend(
-                JmsConfig.VALIDATE_ORDER_RESULT_QUEUE,
-                ValidateBeerOrderResult.builder()
-                        .isValid(valid)
-                        .beerOrderId(request.getBeerOrderDto().getId())
-                        .build()
-        );
+        if (withResponse) {
+            jmsTemplate.convertAndSend(
+                    JmsConfig.VALIDATE_ORDER_RESULT_QUEUE,
+                    ValidateBeerOrderResult.builder()
+                            .isValid(valid)
+                            .beerOrderId(request.getBeerOrderDto().getId())
+                            .build()
+            );
+        }
     }
 }
