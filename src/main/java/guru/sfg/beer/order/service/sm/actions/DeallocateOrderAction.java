@@ -7,8 +7,7 @@ import guru.sfg.beer.order.service.domain.BeerOrderStatus;
 import guru.sfg.beer.order.service.repositories.BeerOrderRepository;
 import guru.sfg.beer.order.service.services.BeerOrderManagerImpl;
 import guru.sfg.beer.order.service.web.mappers.BeerOrderMapper;
-import guru.sfg.brewery.model.BeerOrderDto;
-import guru.sfg.brewery.model.events.ValidateBeerOrderRequest;
+import guru.sfg.brewery.model.events.DeallocateOrderRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.ObjectNotFoundException;
@@ -22,26 +21,29 @@ import java.util.UUID;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ValidateOrderAction implements Action<BeerOrderStatus, BeerOrderEvent> {
+public class DeallocateOrderAction implements Action<BeerOrderStatus, BeerOrderEvent> {
 
     private final JmsTemplate jmsTemplate;
-    private final BeerOrderRepository beerOrderRepository;
     private final BeerOrderMapper beerOrderMapper;
+    private final BeerOrderRepository beerOrderRepository;
 
     @Override
     public void execute(StateContext<BeerOrderStatus, BeerOrderEvent> stateContext) {
         Object idHeader = stateContext.getMessage().getHeaders().get(BeerOrderManagerImpl.BEER_ORDER_ID_HEADER);
+        log.error("Compensating Transaction... Deallocate order id: {}", idHeader);
 
         if (idHeader != null) {
             BeerOrder beerOrder = beerOrderRepository.findById(UUID.fromString(idHeader.toString()))
-                    .orElseThrow(() -> new ObjectNotFoundException(idHeader.toString(), "BeerOrder"));
-            BeerOrderDto beerOrderDto = beerOrderMapper.toBeerDto(beerOrder);
+                    .orElseThrow(() -> {
+                        throw new ObjectNotFoundException(idHeader.toString(), "beerOrder");
+                    });
 
-            log.debug("Sending beerOrder id {} to validate to {}", beerOrder.getId(), BeerOrderManagerImpl.BEER_ORDER_ID_HEADER);
-
-            jmsTemplate.convertAndSend(JmsConfig.VALIDATE_ORDER_QUEUE, new ValidateBeerOrderRequest(beerOrderDto));
-        } else {
-            throw new RuntimeException("Message without id header was sent " + stateContext.getMessage());
+            jmsTemplate.convertAndSend(
+                    JmsConfig.DEALLOCATE_ORDER_QUEUE,
+                    DeallocateOrderRequest.builder()
+                            .beerOrderDto(beerOrderMapper.toBeerDto(beerOrder))
+                            .build()
+            );
         }
     }
 }

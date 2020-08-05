@@ -35,7 +35,7 @@ public class AllocateOrderAction implements Action<BeerOrderStatus, BeerOrderEve
         if (idHeader != null) {
             BeerOrder beerOrder = beerOrderRepository.findById(UUID.fromString(idHeader.toString()))
                     .orElseThrow(() -> new ObjectNotFoundException(idHeader.toString(), "BeerOrder"));
-            BeerOrderDto beerOrderDto = beerOrderMapper.beerOrderToDto(beerOrder);
+            BeerOrderDto beerOrderDto = beerOrderMapper.toBeerDto(beerOrder);
 
             log.debug("Sending beerOrder id {} to allocate to {}", beerOrder.getId(), BeerOrderManagerImpl.BEER_ORDER_ID_HEADER);
 

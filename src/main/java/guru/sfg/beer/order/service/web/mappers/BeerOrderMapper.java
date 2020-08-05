@@ -26,7 +26,7 @@ import org.mapstruct.Mapping;
 public interface BeerOrderMapper {
 
     @Mapping(target = "customerId", source = "customer.id")
-    BeerOrderDto beerOrderToDto(BeerOrder beerOrder);
+    BeerOrderDto toBeerDto(BeerOrder beerOrder);
 
-    BeerOrder dtoToBeerOrder(BeerOrderDto dto);
+    BeerOrder toBeerOrder(BeerOrderDto dto);
 }
