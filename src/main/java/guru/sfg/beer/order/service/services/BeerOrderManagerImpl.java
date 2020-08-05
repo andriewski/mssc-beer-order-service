@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Service
@@ -46,6 +48,9 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
             if (isValid) {
                 sendBeerOrderEvent(beerOrder, BeerOrderEvent.VALIDATION_PASSED);
 
+                //wait for status change
+                awaitForStatus(beerOrderId, BeerOrderStatus.VALIDATED);
+
                 BeerOrder validatedBeerOrder = beerOrderRepository.findById(beerOrderId)
                         .orElseThrow(() -> new ObjectNotFoundException(beerOrderId, "Beer"));
 
@@ -60,6 +65,7 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
     public void beerOrderAllocationPassed(BeerOrderDto beerOrderDto) {
         beerOrderRepository.findById(beerOrderDto.getId()).ifPresentOrElse(beerOrder -> {
             sendBeerOrderEvent(beerOrder, BeerOrderEvent.ALLOCATION_SUCCESS);
+            awaitForStatus(beerOrder.getId(), BeerOrderStatus.ALLOCATED);
             updateAllocatedQuantity(beerOrderDto);
         }, () -> log.error("beerOrderAllocationPassed# Object not found by id: {} ", beerOrderDto.getId()));
     }
@@ -68,6 +74,7 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
     public void beerOrderAllocationPendingInventory(BeerOrderDto beerOrderDto) {
         beerOrderRepository.findById(beerOrderDto.getId()).ifPresentOrElse(beerOrder -> {
             sendBeerOrderEvent(beerOrder, BeerOrderEvent.ALLOCATION_NO_INVENTORY);
+            awaitForStatus(beerOrder.getId(), BeerOrderStatus.ALLOCATION_PENDING);
             updateAllocatedQuantity(beerOrderDto);
         }, () -> log.error("beerOrderAllocationPendingInventory# Object not found by id: {}", beerOrderDto.getId()));
     }
@@ -115,6 +122,35 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
                         .setHeader(BEER_ORDER_ID_HEADER, beerOrder.getId())
                         .build()
         );
+    }
+
+    private void awaitForStatus(UUID beerOrderId, BeerOrderStatus status) {
+        AtomicBoolean found = new AtomicBoolean(false);
+        AtomicInteger loopCount = new AtomicInteger(0);
+
+        while (!found.get()) {
+            if (loopCount.incrementAndGet() > 10) {
+                found.set(false);
+                log.debug("Loop Retries exceeded");
+            }
+
+            beerOrderRepository.findById(beerOrderId).ifPresentOrElse(beerOrder -> {
+                if (status.equals(beerOrder.getOrderStatus())) {
+                    found.set(true);
+                    log.debug("Order found");
+                } else {
+                    log.debug("Order status not equal. Expected: {} Found: {}", status, beerOrder.getOrderStatus());
+                }
+            }, () -> log.debug("Order id not found"));
+
+            if (!found.get()) {
+                try {
+                    log.debug("Sleeping for retry");
+                    Thread.sleep(100);
+                } catch (InterruptedException ignored) {
+                }
+            }
+        }
     }
 
     private StateMachine<BeerOrderStatus, BeerOrderEvent> build(BeerOrder beerOrder) {
