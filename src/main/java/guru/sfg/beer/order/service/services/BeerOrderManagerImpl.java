@@ -104,7 +104,7 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
         beerOrderRepository.findById(beerOrderDto.getId()).ifPresentOrElse(allocatedOrder -> {
             allocatedOrder.getBeerOrderLines().forEach(beerOrderLine -> {
                 beerOrderDto.getBeerOrderLines().forEach(beerOrderLineDto -> {
-                    if (beerOrderLine.getBeerId().equals(beerOrderLineDto.getBeerId())) {
+                    if (beerOrderLineDto.getBeerId().equals(beerOrderLine.getBeerId())) {
                         beerOrderLine.setQuantityAllocated(beerOrderLineDto.getQuantityAllocated());
                     }
                 });
