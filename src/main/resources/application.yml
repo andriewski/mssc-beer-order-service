@@ -1,6 +1,9 @@
 sfg.brewery.beer-service-host: http://localhost:8080
+
 logging.level.guru: debug
+
 server.port: 8081
+
 spring:
     jackson:
         serialization:
@@ -9,4 +12,11 @@ spring:
     artemis:
         user: artemis
         password: simetraehcapa
+    application:
+        name: order-service
 
+eureka:
+    client:
+        serviceUrl:
+            #            default value
+            defaultZone: http://localhost:8761/eureka
