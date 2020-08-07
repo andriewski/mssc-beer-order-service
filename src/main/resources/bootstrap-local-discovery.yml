@@ -1,0 +1,10 @@
+spring:
+    cloud:
+        discovery:
+            enabled: true
+        config:
+            fail-fast: true
+            discovery:
+                service-id: mssc-brewery-config
+#               allow to find config service (with different port) by by eureka service
+                enabled: true
