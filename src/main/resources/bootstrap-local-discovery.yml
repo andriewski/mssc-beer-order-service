@@ -4,6 +4,8 @@ spring:
             enabled: true
         config:
             fail-fast: true
+            username: MyUserName
+            password: MySuperSecretPassword
             discovery:
                 service-id: mssc-brewery-config
 #               allow to find config service (with different port) by by eureka service
