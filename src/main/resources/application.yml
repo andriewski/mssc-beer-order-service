@@ -1,7 +1,5 @@
 sfg.brewery:
     beer-service-host: http://localhost:8080
-    inventory-user: good
-    inventory-password: beer
 
 logging.level.guru: debug
 
