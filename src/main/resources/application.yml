@@ -16,9 +16,3 @@ spring:
         password: simetraehcapa
     zipkin:
         enabled: false
-
-eureka:
-    client:
-        serviceUrl:
-            #            default value + 'netflix' is an username and 'eureka' is a password via base authentication
-            defaultZone: http://netflix:eureka@localhost:8761/eureka
