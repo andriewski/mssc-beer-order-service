@@ -17,3 +17,7 @@ spring:
         password: simetraehcapa
     zipkin:
         enabled: false
+    data:
+        jpa:
+            repositories:
+                bootstrap-mode: default
