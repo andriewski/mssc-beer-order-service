@@ -1,0 +1,12 @@
+spring:
+    datasource:
+        username: beer_order_service
+        password: password
+        url: jdbc:mysql://db-mysql-fra1-49494-order-do-user-7886444-0.a.db.ondigitalocean.com:25060/beer_order_service_db?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC&ssl-mode=REQUIRED
+logging:
+    level:
+#        org.hibernate:
+#            SQL: DEBUG
+#            type.descriptor.sql.BasicBinder: TRACE
+        com.zaxxer.hikari:
+            HikariConfig: TRACE
