@@ -7,7 +7,7 @@
         <!--todo Change to my own bom file -->
         <groupId>com.github.sfg-beer-works</groupId>
         <artifactId>sfg-brewery-bom</artifactId>
-        <version>1.0.18</version>
+        <version>1.0.22</version>
     </parent>
 
     <groupId>guru.springframework</groupId>
