@@ -4,7 +4,7 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
-@Profile("local-discovery")
+@Profile({"local-discovery", "digitalocean"})
 @Configuration
 @EnableDiscoveryClient
 public class LocalDiscoveryConfig {
